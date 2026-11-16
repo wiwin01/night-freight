@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Night Freight — a tactical FPS</title>
+<style>
+  html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; background: #0a0f1e;
+    font-family: "Segoe UI", system-ui, sans-serif; color: #e8e6df; }
+  #game { display: block; width: 100vw; height: 100vh; }
+  #hud { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+  #crosshair { position: absolute; left: 50%; top: 50%; width: 22px; height: 22px;
+    transform: translate(-50%, -50%); display: none; }
+  #crosshair span { position: absolute; inset: 0; }
+  #crosshair span::before, #crosshair span::after { content: ""; position: absolute; background: #fff; }
+  #crosshair span::before { left: 10px; top: 0; width: 2px; height: 22px; }
+  #crosshair span::after { left: 0; top: 10px; width: 22px; height: 2px; }
+  #topbar { position: absolute; top: 14px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 18px; align-items: center; font-size: 20px; }
+  .score { display: flex; gap: 8px; align-items: baseline; padding: 4px 12px; border-radius: 4px;
+    background: rgba(0,0,0,.55); letter-spacing: 1px; font-size: 14px; }
+  .score b { font-size: 26px; }
+  .score.jackals b { color: #e07b39; } .score.wardens b { color: #3cd2c2; }
+  #timer { font-size: 30px; font-weight: 700; background: rgba(0,0,0,.55); padding: 2px 14px; border-radius: 4px; }
+  #timer.urgent { color: #ff5a4e; }
+  #round-label { position: absolute; top: 64px; left: 50%; transform: translateX(-50%);
+    font-size: 12px; letter-spacing: 2px; opacity: .8; }
+  #killfeed { position: absolute; top: 92px; right: 18px; text-align: right; font-size: 13px; }
+  #killfeed div { background: rgba(0,0,0,.5); padding: 3px 8px; margin-top: 4px; border-radius: 3px; }
+  #banner { position: absolute; top: 22%; left: 0; right: 0; text-align: center; transition: opacity .3s; }
+  #banner h1 { margin: 0; font-size: 44px; letter-spacing: 6px; text-shadow: 0 2px 18px #000; }
+  #banner p { margin: 6px 0 0; font-size: 16px; opacity: .9; text-shadow: 0 1px 8px #000; }
+  #bottombar { position: absolute; bottom: 18px; left: 0; right: 0; display: flex;
+    justify-content: space-between; align-items: flex-end; padding: 0 22px; }
+  #bottombar > div { background: rgba(0,0,0,.55); padding: 8px 14px; border-radius: 4px; }
+  #bottombar b { font-size: 28px; } #bottombar span { font-size: 12px; letter-spacing: 1px; opacity: .8; margin-left: 6px; }
+  #health.low b { color: #ff5a4e; }
+  #armor { font-size: 11px; color: #9fc4ff; visibility: hidden; }
+  #objective { position: absolute; bottom: 96px; left: 22px; font-size: 13px;
+    background: rgba(0,0,0,.55); padding: 6px 10px; border-radius: 4px; }
+  #objective b { color: #ffc93c; }
+  #plantbar { position: absolute; bottom: 150px; left: 50%; transform: translateX(-50%);
+    width: 320px; height: 18px; background: rgba(0,0,0,.6); border: 1px solid #ffc93c;
+    border-radius: 3px; opacity: 0; }
+  #plantfill { height: 100%; width: 0; background: #ffc93c; }
+  #planttext { position: absolute; inset: 0; text-align: center; font-size: 12px; line-height: 18px; letter-spacing: 2px; }
+  #buymenu { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: rgba(8,10,18,.92); border: 1px solid #555; border-radius: 6px; padding: 16px 20px;
+    display: none; pointer-events: auto; width: 340px; }
+  #buymenu h2 { margin: 0 0 10px; font-size: 16px; letter-spacing: 2px; }
+  .buyrow { padding: 7px 8px; cursor: pointer; border-radius: 3px; font-size: 14px; }
+  .buyrow:hover { background: rgba(255,255,255,.12); }
+  .buyrow .k { display: inline-block; width: 22px; color: #ffc93c; font-weight: 700; }
+  .buyrow i { float: right; font-style: normal; color: #8fe388; }
+  .buyrow.cant { opacity: .4; } .buyrow.owned { color: #8fe388; }
+  #buymenu .hint { font-size: 11px; opacity: .7; margin: 10px 0 0; }
+  #flash { position: absolute; inset: 0; background: #fff; opacity: 0; transition: opacity .1s; }
+  #hitmarker { position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%) translateY(-34px);
+    font-size: 22px; opacity: 0; text-shadow: 0 0 6px #000; }
+  #death { position: absolute; inset: 0; display: none; align-items: center; justify-content: center;
+    flex-direction: column; background: rgba(20,0,0,.35); }
+  #death h1 { letter-spacing: 6px; }
+  #start-screen, #endscreen { position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; background: rgba(5,8,16,.82); pointer-events: auto; text-align: center; }
+  #endscreen { display: none; }
+  #start-screen h1, #endscreen h1 { font-size: 54px; letter-spacing: 10px; margin: 0; color: #ffc93c;
+    text-shadow: 0 0 30px rgba(255,180,60,.5); }
+  #start-screen p, #endscreen p { font-size: 16px; line-height: 1.6; opacity: .9; }
+  #start-screen button, #endscreen button { pointer-events: auto; margin-top: 18px; font-size: 18px;
+    padding: 12px 34px; background: #e07b39; color: #fff; border: none; border-radius: 4px;
+    cursor: pointer; letter-spacing: 2px; }
+  #start-screen button:hover, #endscreen button:hover { background: #f08a45; }
+  #start-screen .hint { font-size: 12px; opacity: .6; }
+</style>
+<script type="importmap">
+{ "imports": { "three": "./three.module.min.js" } }
+</script>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="hud"></div>
+<script type="module" src="./src/main.js"></script>
+</body>
+</html>
