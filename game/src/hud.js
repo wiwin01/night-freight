@@ -1,8 +1,8 @@
 // Night Freight — the HUD: health, ammo, money, timer, scores, killfeed,
 // buy menu, round banners and the plant channel bar. All DOM, updated from the
 // sim state once a frame; nothing here touches the 3D scene.
-import { WEAPONS, GEAR, buyPrice } from './weapons.js';
-import { phaseTimeLeft } from './state.js';
+import { WEAPONS, GEAR } from './weapons.js';
+import { phaseTimeLeft, buyPrice } from './state.js';
 import { YARD } from './world.js';
 
 export function buildHud(document) {

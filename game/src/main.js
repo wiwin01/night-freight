@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { makeRng } from './rng.js';
 import { buildWorld } from './world.js';
-import { newMatch, startLive, endRound, nextRound, aliveOf, buy, setBanner, WIN_ROUNDS } from './state.js';
+import { newMatch, startLive, endRound, nextRound, aliveOf, buy, setBanner, WIN_ROUNDS, BUY_SECONDS } from './state.js';
 import { initBots, updateBot } from './bots.js';
 import { makeInput, bindInput, updatePlayer, updateGrenades, eyePos } from './player.js';
 import { buildHud, updateHud, showHitmarker } from './hud.js';
